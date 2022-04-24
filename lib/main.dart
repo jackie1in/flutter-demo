@@ -1,3 +1,5 @@
+// ignore_for_file: must_be_immutable
+
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
@@ -6,33 +8,34 @@ void main() {
   runApp(const MyApp());
 }
 
-class FevoriteStarWidget extends StatefulWidget {
-  final int star;
-  final bool fevorite;
-  const FevoriteStarWidget(
-      {Key? key, required this.star, required this.fevorite})
-      : super(key: key);
-
-  @override
-  _FevoriteStarState createState() => _FevoriteStarState();
+class FevoriteStar {
+  int star = 0;
+  bool isFevorite = false;
+  FevoriteStar(this.isFevorite, this.star);
 }
 
-class _FevoriteStarState extends State<FevoriteStarWidget> {
-  // 当前用户时候喜欢该篇文章
-  bool _isFevorite = true;
-  int _fevoriteCount = 40;
+class FevoriteStarWidget extends StatelessWidget {
+  int star;
+  bool isFevorite;
+  FevoriteStarWidget(
+      {Key? key,
+      required this.star,
+      required this.isFevorite,
+      required this.onChanged})
+      : super(key: key);
+
+  final ValueChanged<FevoriteStar> onChanged;
 
   void _toggleFevoriteStar() {
-    setState(() {
-      // 当触发按钮时,当前值是喜欢,那么就是不喜欢的的操作反之亦然
-      if (_isFevorite) {
-        _fevoriteCount--;
-        _isFevorite = false;
-      } else {
-        _fevoriteCount++;
-        _isFevorite = true;
-      }
-    });
+    // 当触发按钮时,当前值是喜欢,那么就是不喜欢的的操作反之亦然
+    if (isFevorite) {
+      star--;
+      isFevorite = false;
+    } else {
+      star++;
+      isFevorite = true;
+    }
+    onChanged(FevoriteStar(isFevorite, star));
   }
 
   @override
@@ -41,25 +44,35 @@ class _FevoriteStarState extends State<FevoriteStarWidget> {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: (_isFevorite
+          icon: (isFevorite
               ? const Icon(Icons.star)
               : const Icon(Icons.star_border)),
           color: Colors.yellow,
           onPressed: _toggleFevoriteStar,
         ),
-        Text(_fevoriteCount.toString()),
+        Text(star.toString()),
       ],
     );
   }
 }
 
-class Title extends StatelessWidget {
-  final String title;
-  final String author;
-  final int star = 0;
-  const Title(
-      {Key? key, required this.title, required this.author, required int star})
-      : super(key: key);
+class _TitleState extends State<Title> {
+  // 当前用户时候喜欢该篇文章
+  String title;
+  String author;
+  int star = 0;
+  bool isFevorite;
+  _TitleState(this.title, this.author, int star, this.isFevorite);
+
+  void _toggleFevoriteStar(FevoriteStar fevoriteStar) {
+    setState(() {
+      isFevorite = fevoriteStar.isFevorite;
+      star = fevoriteStar.star;
+      print("${isFevorite}");
+      print("${star}");
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -86,11 +99,33 @@ class Title extends StatelessWidget {
                   ),
                 ),
               ])),
-          const FevoriteStarWidget(fevorite: true, star: 40)
+          FevoriteStarWidget(
+            isFevorite: isFevorite,
+            star: star,
+            onChanged: _toggleFevoriteStar,
+          )
         ],
       ),
     );
   }
+}
+
+class Title extends StatefulWidget {
+  final String title;
+  final String author;
+  final int star = 0;
+  final bool isFevorite;
+  const Title(
+      {Key? key,
+      required this.title,
+      required this.author,
+      required int star,
+      required this.isFevorite})
+      : super(key: key);
+
+  @override
+  // ignore: no_logic_in_create_state
+  _TitleState createState() => _TitleState(title, author, star, isFevorite);
 }
 
 class Buttons extends StatelessWidget {
@@ -169,7 +204,12 @@ class MyApp extends StatelessWidget {
               height: 240.0,
               fit: BoxFit.cover,
             ),
-            const Title(title: "title", author: "autor", star: 1),
+            const Title(
+              title: "title",
+              author: "autor",
+              star: 1,
+              isFevorite: false,
+            ),
             const Buttons(),
             const Content(content: "文本内容"),
           ],
